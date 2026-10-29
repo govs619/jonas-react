@@ -1,15 +1,5 @@
-import Search from "./Search";
-import Logo from "./Logo";
-import SearchResult from "./SearchResult";
-
-function Navbar() {
-  return (
-    <nav className="nav-bar">
-      <Logo />
-      <Search />
-      <SearchResult />
-    </nav>
-  );
+function Navbar({ children }) {
+  return <nav className="nav-bar">{children}</nav>;
 }
 
 export default Navbar;
