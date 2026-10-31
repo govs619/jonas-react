@@ -9,6 +9,7 @@ import Box from "./Box";
 import WatchedSummary from "./main/watchedbox/WatchedSummary";
 import WatchedList from "./main/watchedbox/WatchedList";
 import MovieDetails from "./main/watchedbox/MovieDetails";
+import Loader from "./Loader";
 
 const tempMovieData = [
   {
@@ -65,10 +66,14 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState("tt4244162");
+  const [selectedId, setSelectedId] = useState("");
 
   function handleSelectMovie(id) {
-    setSelectedId(id);
+    setSelectedId((selectedId) => (id !== selectedId ? id : null));
+  }
+
+  function handleCloseMovie() {
+    setSelectedId(null);
   }
 
   useEffect(
@@ -119,11 +124,17 @@ function App() {
         <Box>
           {isLoading && <Loader />}
           {error && <ErrorMessage message={error} />}
-          {!isLoading && !error && <MovieList movies={movies} />}
+          {!isLoading && !error && (
+            <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
+          )}
         </Box>
         <Box>
           {selectedId ? (
-            <MovieDetails selectedId={selectedId} />
+            <MovieDetails
+              selectedId={selectedId}
+              onCloseMovie={handleCloseMovie}
+              apiKey={KEY}
+            />
           ) : (
             <>
               <WatchedSummary watched={watched} />
@@ -136,9 +147,9 @@ function App() {
   );
 }
 
-function Loader() {
-  return <p className="loader">Loading...</p>;
-}
+// function Loader() {
+//   return <p className="loader">Loading...</p>;
+// }
 
 function ErrorMessage({ message }) {
   return (
