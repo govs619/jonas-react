@@ -11,7 +11,7 @@ import WatchedList from "./main/watchedbox/WatchedList";
 import MovieDetails from "./main/watchedbox/MovieDetails";
 import Loader from "./Loader";
 
-const tempMovieData = [
+/* const tempMovieData = [
   {
     imdbID: "tt1375666",
     Title: "Inception",
@@ -56,13 +56,13 @@ const tempWatchedData = [
     imdbRating: 8.5,
     userRating: 9,
   },
-];
+]; */
+
 const KEY = "58a24072";
-const tempQuery = "interstellar";
 
 function App() {
   const [movies, setMovies] = useState([]);
-  const [watched, setWatched] = useState(tempWatchedData);
+  const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -76,14 +76,24 @@ function App() {
     setSelectedId(null);
   }
 
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie]);
+  }
+
+  function handleRemoveMovie(imdbId) {
+    setWatched((watched) => watched.filter((mov) => mov.imdbID !== imdbId));
+  }
+
   useEffect(
     function () {
+      const controller = new AbortController();
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError("");
           const result = await fetch(
             `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal },
           );
 
           if (!result.ok) {
@@ -91,14 +101,16 @@ function App() {
           }
 
           const data = await result.json();
-          console.log(data.Search);
+          // console.log(data.Search);
           if (!data.Search) {
             throw new Error("No movies found"); //tt4244162
           }
           setMovies(data.Search);
         } catch (err) {
           console.error(err.message);
-          setError(err.message);
+          if (err.name !== "AbortError") {
+            setError(err.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -108,7 +120,14 @@ function App() {
         setError("");
         return;
       }
+
+      handleCloseMovie();
       fetchMovies();
+
+      return function () {
+        controller.abort();
+        // console.log("Cleaning up the last request");
+      };
     },
     [query],
   );
@@ -133,12 +152,17 @@ function App() {
             <MovieDetails
               selectedId={selectedId}
               onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
+              watched={watched}
               apiKey={KEY}
             />
           ) : (
             <>
               <WatchedSummary watched={watched} />
-              <WatchedList watched={watched} />
+              <WatchedList
+                watched={watched}
+                onRemoveMovie={handleRemoveMovie}
+              />
             </>
           )}
         </Box>
@@ -146,10 +170,6 @@ function App() {
     </>
   );
 }
-
-// function Loader() {
-//   return <p className="loader">Loading...</p>;
-// }
 
 function ErrorMessage({ message }) {
   return (
